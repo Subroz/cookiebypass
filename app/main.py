@@ -54,6 +54,17 @@ async def health():
     return {"status": "ok", "service": "media-extraction-api", "time": int(time())}
 
 
+@app.get("/")
+async def root():
+    return {
+        "service": "media-extraction-api",
+        "status": "ok",
+        "metadata_endpoint": "/v1/metadata",
+        "direct_url_endpoint": "/v1/direct-url",
+        "vercel_proxy": "/api/test",
+    }
+
+
 @app.post("/v1/metadata", response_model=MediaMetadata, dependencies=[Depends(require_api_key)])
 async def metadata(payload: MediaRequest):
     return await extractor.metadata(str(payload.url))
