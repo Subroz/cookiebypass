@@ -73,7 +73,7 @@ The container runs as a non-root user, mounts cookies read-only, and includes ff
 
 Vercel is supported only as a thin test proxy. It is not a suitable place to run yt-dlp or persist cookies because serverless functions have execution, storage, and response limits.
 
-Deploy the `api/test.py` function and configure these Vercel environment variables:
+Deploy the `api/test.js` function and configure these Vercel environment variables:
 
 ```text
 MEDIA_API_URL=https://api.example.com
