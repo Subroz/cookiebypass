@@ -10,8 +10,8 @@ export default async function handler(_request, response) {
   }
 
   try {
-    const upstream = await fetch(`${apiUrl}/health`, {
-      signal: AbortSignal.timeout(5000),
+    const upstream = await fetch(`${apiUrl}/health/diagnostics`, {
+      signal: AbortSignal.timeout(9000),
     });
     const body = await upstream.text();
     response.setHeader("Content-Type", "application/json");

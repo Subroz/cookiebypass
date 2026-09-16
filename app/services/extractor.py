@@ -1,14 +1,20 @@
 import asyncio
 import os
-import re
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.parse import urlparse
 
+import httpx
 import yt_dlp
 
 from app.config import settings
-from app.models import DirectUrlResponse, FormatSummary, MediaMetadata
+from app.models import (
+    DirectUrlResponse,
+    FormatSummary,
+    HealthDiagnostics,
+    MediaMetadata,
+    PlatformHealth,
+)
 
 
 PLATFORM_HOSTS: dict[str, tuple[str, ...]] = {
@@ -16,6 +22,13 @@ PLATFORM_HOSTS: dict[str, tuple[str, ...]] = {
     "tiktok": ("tiktok.com",),
     "instagram": ("instagram.com",),
     "facebook": ("facebook.com", "fb.watch"),
+}
+
+PLATFORM_HEALTH_URLS = {
+    "youtube": "https://www.youtube.com/generate_204",
+    "tiktok": "https://www.tiktok.com/",
+    "instagram": "https://www.instagram.com/",
+    "facebook": "https://www.facebook.com/",
 }
 
 
@@ -62,6 +75,75 @@ class ExtractorService:
                 "path": str(path or self.cookie_dir / f"{platform}.txt"),
             })
         return result
+
+    async def diagnostics(self) -> HealthDiagnostics:
+        async with httpx.AsyncClient(
+            follow_redirects=True,
+            timeout=min(settings.request_timeout_seconds, 4),
+            headers={"User-Agent": "media-extraction-api/1.0"},
+        ) as client:
+            checks = await asyncio.gather(
+                *(
+                    self._probe_platform(client, platform, endpoint)
+                    for platform, endpoint in PLATFORM_HEALTH_URLS.items()
+                )
+            )
+
+        failed = [check for check in checks if check.status != "ok"]
+        return HealthDiagnostics(
+            status="ok" if not failed else "degraded",
+            service="media-extraction-api",
+            checks=checks,
+            checked_at=int(__import__("time").time()),
+        )
+
+    async def _probe_platform(
+        self, client: httpx.AsyncClient, platform: str, endpoint: str
+    ) -> PlatformHealth:
+        cookie_configured = self.cookie_path(platform) is not None
+        try:
+            response = await client.get(endpoint)
+        except httpx.TimeoutException:
+            return PlatformHealth(
+                platform=platform,
+                status="network_error",
+                endpoint=endpoint,
+                cookie_configured=cookie_configured,
+                detail="The platform probe timed out",
+            )
+        except httpx.HTTPError as exc:
+            return PlatformHealth(
+                platform=platform,
+                status="network_error",
+                endpoint=endpoint,
+                cookie_configured=cookie_configured,
+                detail=f"The platform probe failed: {type(exc).__name__}",
+            )
+
+        if 200 <= response.status_code < 400:
+            return PlatformHealth(
+                platform=platform,
+                status="ok",
+                endpoint=endpoint,
+                http_status=response.status_code,
+                cookie_configured=cookie_configured,
+                detail="Platform endpoint is reachable from this server",
+            )
+
+        likely_block = response.status_code in {401, 403, 429, 451, 503}
+        return PlatformHealth(
+            platform=platform,
+            status="possible_ip_block" if likely_block else "http_error",
+            endpoint=endpoint,
+            http_status=response.status_code,
+            cookie_configured=cookie_configured,
+            likely_ip_block=likely_block,
+            detail=(
+                "The platform rejected or rate-limited this server; this may be an IP, region, or authentication block"
+                if likely_block
+                else "The platform returned an unexpected HTTP status"
+            ),
+        )
 
     async def close(self) -> None:
         self._executor.shutdown(wait=False, cancel_futures=True)

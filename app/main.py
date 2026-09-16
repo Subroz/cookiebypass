@@ -8,7 +8,14 @@ from fastapi.responses import JSONResponse
 
 from app.auth import require_admin_key, require_api_key
 from app.config import settings
-from app.models import CookieStatus, DirectUrlResponse, ErrorResponse, MediaMetadata, MediaRequest
+from app.models import (
+    CookieStatus,
+    DirectUrlResponse,
+    ErrorResponse,
+    HealthDiagnostics,
+    MediaMetadata,
+    MediaRequest,
+)
 from app.services.extractor import ExtractionError, ExtractorService
 
 
@@ -52,6 +59,11 @@ async def extraction_error_handler(request: Request, exc: ExtractionError):
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "media-extraction-api", "time": int(time())}
+
+
+@app.get("/health/diagnostics", response_model=HealthDiagnostics)
+async def health_diagnostics():
+    return await extractor.diagnostics()
 
 
 @app.get("/")

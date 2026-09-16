@@ -49,6 +49,23 @@ class CookieStatus(BaseModel):
     path: str
 
 
+class PlatformHealth(BaseModel):
+    platform: str
+    status: str
+    endpoint: str
+    http_status: int | None = None
+    cookie_configured: bool = False
+    likely_ip_block: bool = False
+    detail: str
+
+
+class HealthDiagnostics(BaseModel):
+    status: str
+    service: str
+    checks: list[PlatformHealth] = Field(default_factory=list)
+    checked_at: int
+
+
 class ErrorResponse(BaseModel):
     error: str
     detail: str
