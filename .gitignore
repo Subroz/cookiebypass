@@ -1,7 +1,22 @@
 .env
+.env.*
+!.env.example
 .venv/
 __pycache__/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 *.py[cod]
+
+# Runtime data and secrets
 /run/secrets/
 cookies/
+downloads/
+data/
+*.log
+*.db
+*.sqlite3
+
+# OS/editor files
+.DS_Store
+Thumbs.db
