@@ -82,7 +82,7 @@ MEDIA_API_KEY=<same key configured on the VPS>
 
 Send the same JSON body used by `/v1/metadata` to `/api/test`. Keep the API key server-side; never expose it in browser JavaScript.
 
-The Vercel proxy health check is available at `/api/health`. The VPS API health check is available at `/health` on the VPS domain.
+The Vercel proxy health check is available at `/api/test` with `GET`. The VPS API health check is available at `/health` on the VPS domain.
 
 ## Existing bot integration
 

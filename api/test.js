@@ -8,7 +8,29 @@ export default async function handler(request, response) {
   }
 
   if (request.method !== "POST") {
-    response.status(405).json({ error: "Use POST /api/test" });
+    const apiUrl = (process.env.MEDIA_API_URL || "").replace(/\/$/, "");
+    if (!apiUrl) {
+      response.status(500).json({
+        status: "error",
+        error: "MEDIA_API_URL is not configured",
+      });
+      return;
+    }
+
+    try {
+      const upstream = await fetch(`${apiUrl}/health/diagnostics`, {
+        signal: AbortSignal.timeout(9000),
+      });
+      const text = await upstream.text();
+      response.setHeader("Content-Type", "application/json");
+      response.status(upstream.status).send(text);
+    } catch (error) {
+      response.status(502).json({
+        status: "error",
+        error: "VPS health check failed",
+        detail: error instanceof Error ? error.message : "Unknown upstream error",
+      });
+    }
     return;
   }
 
