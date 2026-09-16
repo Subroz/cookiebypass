@@ -5,9 +5,6 @@ from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import urlparse
 
-import yt_dlp
-
-
 PLATFORM_HOSTS = {
     "youtube": ("youtube.com", "youtu.be"),
     "tiktok": ("tiktok.com",),
@@ -34,6 +31,13 @@ def cookie_file(platform: str) -> str | None:
 
 
 def extract_metadata(url: str) -> dict:
+    try:
+        import yt_dlp
+    except ImportError as exc:
+        raise RuntimeError(
+            "yt-dlp is not installed in the Vercel Python runtime"
+        ) from exc
+
     platform = platform_for_url(url)
     options = {
         "quiet": True,
@@ -103,14 +107,21 @@ class handler(BaseHTTPRequestHandler):
             self._json(200, result)
         except ValueError as exc:
             self._json(422, {"error": "invalid_request", "detail": str(exc)})
-        except yt_dlp.utils.DownloadError as exc:
+        except Exception as exc:
             message = str(exc).lower()
+            if "no module named" in message and "yt_dlp" in message:
+                self._json(
+                    502,
+                    {
+                        "error": "RUNTIME_DEPENDENCY_MISSING",
+                        "detail": "yt-dlp is not installed in the Vercel Python runtime",
+                    },
+                )
+                return
             code = "AUTH_REQUIRED" if any(
                 text in message for text in ("sign in", "login", "cookies", "not a bot")
             ) else "EXTRACTION_FAILED"
             self._json(502, {"error": code, "detail": str(exc)[-1000:]})
-        except Exception as exc:
-            self._json(502, {"error": "EXTRACTION_FAILED", "detail": str(exc)})
 
     def do_GET(self) -> None:
         self._json(405, {"error": "Use POST /api/metadata.py"})
