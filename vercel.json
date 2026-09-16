@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/test.py": {
+      "runtime": "python3.12"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+services:
+  media-api:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./cookies:/run/secrets/cookies:ro
+    read_only: true
+    tmpfs:
+      - /tmp
