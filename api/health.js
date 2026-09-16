@@ -1,4 +1,4 @@
-export default async function handler(_request, response) {
+async function handler(_request, response) {
   const apiUrl = (process.env.MEDIA_API_URL || "").replace(/\/$/, "");
 
   if (!apiUrl) {
@@ -24,3 +24,5 @@ export default async function handler(_request, response) {
     });
   }
 }
+
+module.exports = handler;

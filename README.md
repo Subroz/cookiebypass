@@ -4,6 +4,8 @@ FastAPI service for an existing bot to retrieve metadata and short-lived direct 
 
 The service runs yt-dlp on a persistent VPS. It supports operator-managed Netscape cookie files, but cookies do not guarantee access: platforms can still reject datacenter IPs, expire sessions, require additional verification, or restrict content.
 
+For Vercel-only metadata extraction, use `POST /api/metadata.py`. This function runs yt-dlp directly in Vercel and does not require a VPS URL.
+
 ## Run locally
 
 ```powershell
@@ -72,6 +74,18 @@ The container runs as a non-root user, mounts cookies read-only, and includes ff
 ## Vercel testing
 
 Vercel is supported only as a thin test proxy. It is not a suitable place to run yt-dlp or persist cookies because serverless functions have execution, storage, and response limits.
+
+The repository also includes a direct Vercel metadata function. Configure `API_KEY` optionally, then call:
+
+```text
+POST https://your-project.vercel.app/api/metadata.py
+Content-Type: application/json
+Authorization: Bearer <API_KEY>
+
+{"url":"https://youtu.be/VIDEO_ID"}
+```
+
+Optional Vercel environment variables can contain Netscape cookie text for authorized access: `YOUTUBE_COOKIES`, `TIKTOK_COOKIES`, `INSTAGRAM_COOKIES`, and `FACEBOOK_COOKIES`. These are written only to the function's temporary filesystem and are not returned.
 
 Deploy the `api/test.js` function and configure these Vercel environment variables:
 

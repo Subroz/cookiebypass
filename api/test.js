@@ -1,4 +1,4 @@
-export default async function handler(request, response) {
+async function handler(request, response) {
   if (request.method === "OPTIONS") {
     response.setHeader("Access-Control-Allow-Origin", "*");
     response.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -64,3 +64,5 @@ export default async function handler(request, response) {
     });
   }
 }
+
+module.exports = handler;
