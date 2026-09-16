@@ -47,6 +47,9 @@ def extract_metadata(url: str) -> dict:
         "socket_timeout": 8,
         "retries": 1,
     }
+    proxy = os.environ.get("EXTRACTOR_PROXY") or os.environ.get("HTTPS_PROXY")
+    if proxy:
+        options["proxy"] = proxy
     cookies = cookie_file(platform)
     if cookies:
         options["cookiefile"] = cookies
