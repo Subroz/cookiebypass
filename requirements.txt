@@ -1,6 +1,7 @@
 fastapi>=0.115,<1.0
 uvicorn[standard]>=0.30,<1.0
 yt-dlp>=2026.8.19
+PySocks>=1.7.1
 pydantic>=2.8,<3.0
 httpx>=0.27,<1.0
 pytest>=8.0,<9.0

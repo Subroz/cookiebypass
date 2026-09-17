@@ -87,7 +87,13 @@ Authorization: Bearer <API_KEY>
 
 Optional Vercel environment variables can contain Netscape cookie text for authorized access: `YOUTUBE_COOKIES`, `TIKTOK_COOKIES`, `INSTAGRAM_COOKIES`, and `FACEBOOK_COOKIES`. These are written only to the function's temporary filesystem and are not returned.
 
-For authorized network routing, configure `EXTRACTOR_PROXY` in Vercel, for example `http://user:password@host:port`. The proxy value is read only from the environment and is never hardcoded or returned. Rotate the proxy credential if it is exposed.
+For authorized network routing, configure `EXTRACTOR_PROXY` in Vercel. SOCKS5 examples:
+
+```env
+EXTRACTOR_PROXY=socks5h://user:password@host:port
+```
+
+Use `socks5h://` when the proxy should resolve DNS. `socks5://` is also supported. HTTP proxies use `http://user:password@host:port`. The proxy value is read only from the environment and is never hardcoded or returned. Rotate the proxy credential if it is exposed.
 
 Deploy the `api/test.js` function and configure these Vercel environment variables:
 
