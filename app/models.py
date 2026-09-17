@@ -12,9 +12,16 @@ class MediaRequest(BaseModel):
 
 class FormatSummary(BaseModel):
     format_id: str
+    quality: str | None = None
     ext: str | None = None
     resolution: str | None = None
+    width: int | None = None
+    height: int | None = None
+    fps: float | None = None
     abr: float | None = None
+    tbr: float | None = None
+    vcodec: str | None = None
+    acodec: str | None = None
     filesize: int | None = None
     has_video: bool = False
     has_audio: bool = False
@@ -29,6 +36,7 @@ class MediaMetadata(BaseModel):
     duration: float | None = None
     thumbnail: str | None = None
     formats: list[FormatSummary] = Field(default_factory=list)
+    available_qualities: list[str] = Field(default_factory=list)
 
 
 class DirectUrlResponse(BaseModel):

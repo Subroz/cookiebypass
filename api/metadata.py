@@ -58,18 +58,53 @@ def extract_metadata(url: str) -> dict:
         info = downloader.extract_info(url, download=False)
 
     formats = []
-    for item in (info.get("formats") or [])[-40:]:
+    seen: set[tuple[str, str | None, bool, bool]] = set()
+    for item in info.get("formats") or []:
+        has_video = item.get("vcodec") not in (None, "none")
+        has_audio = item.get("acodec") not in (None, "none")
+        format_id = str(item.get("format_id", "unknown"))
+        resolution = item.get("resolution") or item.get("format_note")
+        key = (format_id, resolution, has_video, has_audio)
+        if not item.get("url") or key in seen:
+            continue
+        seen.add(key)
+        height = item.get("height")
+        width = item.get("width")
+        if has_video and height:
+            quality = f"{height}p"
+        elif has_audio:
+            quality = f"audio {round(item.get('abr') or 0)}kbps" if item.get("abr") else "audio"
+        else:
+            quality = resolution or item.get("ext") or "format"
         formats.append(
             {
-                "format_id": str(item.get("format_id", "unknown")),
+                "format_id": format_id,
+                "quality": quality,
                 "ext": item.get("ext"),
-                "resolution": item.get("resolution") or item.get("format_note"),
+                "resolution": resolution,
+                "width": width,
+                "height": height,
+                "fps": item.get("fps"),
+                "abr": item.get("abr"),
+                "tbr": item.get("tbr"),
+                "vcodec": item.get("vcodec"),
+                "acodec": item.get("acodec"),
                 "filesize": item.get("filesize") or item.get("filesize_approx"),
-                "has_video": item.get("vcodec") not in (None, "none"),
-                "has_audio": item.get("acodec") not in (None, "none"),
+                "has_video": has_video,
+                "has_audio": has_audio,
                 "url": item.get("url"),
             }
         )
+
+    formats.sort(
+        key=lambda item: (
+            item["has_video"],
+            item.get("height") or 0,
+            item.get("tbr") or 0,
+            item["has_audio"],
+        ),
+        reverse=True,
+    )
 
     return {
         "id": info.get("id"),
@@ -79,7 +114,11 @@ def extract_metadata(url: str) -> dict:
         "uploader": info.get("uploader") or info.get("channel"),
         "duration": info.get("duration"),
         "thumbnail": info.get("thumbnail"),
-        "formats": formats,
+        "formats": formats[:80],
+        "available_qualities": sorted(
+            {item["quality"] for item in formats},
+            key=lambda value: ("audio" in value, value),
+        ),
     }
 
 

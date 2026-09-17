@@ -36,6 +36,8 @@ Invoke-RestMethod http://127.0.0.1:8000/v1/direct-url -Method Post -Headers $hea
 
 Direct URLs are signed by the source and may expire quickly. Request them immediately before the bot sends or streams the media.
 
+Metadata responses include `formats` and `available_qualities`. Build Telegram quality buttons from these fields instead of hardcoding only `best`, `720p`, `480p`, and `audio`.
+
 ## Cookie files
 
 Create a private `cookies` directory on the VPS and mount these files as read-only:
